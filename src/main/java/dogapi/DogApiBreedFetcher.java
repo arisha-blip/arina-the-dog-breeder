@@ -29,7 +29,48 @@ public class DogApiBreedFetcher implements BreedFetcher {
         //      and the documentation for the dog.ceo API. You may find it helpful
         //      to refer to the examples of using OkHttpClient from the last lab,
         //      as well as the code for parsing JSON responses.
-        // return statement included so that the starter code can compile and run.
-        return new ArrayList<>();
+        String url = "https://dog.ceo/api/breed/" + breed.toLowerCase() + "/list";
+
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+
+            // Check for HTTP-level errors (e.g., 404 Not Found)
+            if (!response.isSuccessful()) {
+                throw new BreedNotFoundException("API call failed with code: " + response.code() + " for breed: " + breed);
+            }
+
+            // Get the response body as a string
+            String responseBody = response.body().string();
+            if (responseBody == null) {
+                throw new BreedNotFoundException("API returned an empty body for breed: " + breed);
+            }
+
+            // Parse the JSON response
+            JSONObject jsonResponse = new JSONObject(responseBody);
+
+            String status = jsonResponse.getString("status");
+            if (!"success".equals(status)) {
+                String apiMessage = jsonResponse.optString("message", "Unknown API error");
+                throw new BreedNotFoundException("API error for breed '" + breed + "': " + apiMessage);
+            }
+
+            JSONArray subBreedsArray = jsonResponse.getJSONArray("message");
+            List<String> subBreedsList = new ArrayList<>();
+
+            // Convert the JSONArray to a List<String>
+            for (int i = 0; i < subBreedsArray.length(); i++) {
+                subBreedsList.add(subBreedsArray.getString(i));
+            }
+
+            return subBreedsList;
+
+        } catch (IOException | org.json.JSONException e) {
+            // Catch network errors (IOException) or JSON parsing errors (JSONException)
+            // As per requirements, report all failures as BreedNotFoundException
+            throw new BreedNotFoundException("Failed to fetch or parse sub-breeds for: " + breed, e);
+        }
     }
 }
