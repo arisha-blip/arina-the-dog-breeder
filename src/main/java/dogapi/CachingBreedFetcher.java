@@ -58,7 +58,7 @@ public class CachingBreedFetcher implements BreedFetcher {
             return subBreeds;
 
         } catch (BreedNotFoundException e) {
-            throw e;
+            throw new BreedNotFoundException(breed);
         }
     }
 

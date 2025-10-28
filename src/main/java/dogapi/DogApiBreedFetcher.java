@@ -24,7 +24,7 @@ public class DogApiBreedFetcher implements BreedFetcher {
      * @throws BreedNotFoundException if the breed does not exist (or if the API call fails for any reason)
      */
     @Override
-    public List<String> getSubBreeds(String breed) {
+    public List<String> getSubBreeds(String breed) throws BreedNotFoundException{
         // TODO Task 1: Complete this method based on its provided documentation
         //      and the documentation for the dog.ceo API. You may find it helpful
         //      to refer to the examples of using OkHttpClient from the last lab,
@@ -39,13 +39,13 @@ public class DogApiBreedFetcher implements BreedFetcher {
 
             // Check for HTTP-level errors (e.g., 404 Not Found)
             if (!response.isSuccessful()) {
-                throw new BreedNotFoundException("API call failed with code: " + response.code() + " for breed: " + breed);
+                throw new BreedNotFoundException(breed);
             }
 
             // Get the response body as a string
             String responseBody = response.body().string();
             if (responseBody == null) {
-                throw new BreedNotFoundException("API returned an empty body for breed: " + breed);
+                throw new BreedNotFoundException(breed);
             }
 
             // Parse the JSON response
@@ -54,7 +54,7 @@ public class DogApiBreedFetcher implements BreedFetcher {
             String status = jsonResponse.getString("status");
             if (!"success".equals(status)) {
                 String apiMessage = jsonResponse.optString("message", "Unknown API error");
-                throw new BreedNotFoundException("API error for breed '" + breed + "': " + apiMessage);
+                throw new BreedNotFoundException(breed);
             }
 
             JSONArray subBreedsArray = jsonResponse.getJSONArray("message");
@@ -70,7 +70,7 @@ public class DogApiBreedFetcher implements BreedFetcher {
         } catch (IOException | org.json.JSONException e) {
             // Catch network errors (IOException) or JSON parsing errors (JSONException)
             // As per requirements, report all failures as BreedNotFoundException
-            throw new BreedNotFoundException("Failed to fetch or parse sub-breeds for: " + breed, e);
+            throw new BreedNotFoundException(breed, e);
         }
     }
 }
